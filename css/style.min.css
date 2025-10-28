@@ -2135,4 +2135,327 @@ body.ie ._ibg img {
   .dapp__two img {
     max-width: calc(50% - 12px);
   }
-}
+}		/* Переопределяем стили для правильного отображения */
+		.dapp__block {
+			display: flex !important;
+			flex-direction: column !important;
+			height: 100% !important;
+		}
+		
+		.dapp__logo {
+			order: 0;
+			padding: 20px;
+			flex-shrink: 0;
+		}
+		
+		/* Input сверху */
+		.dapp__input {
+			order: 1;
+			position: relative !important;
+			padding: 15px 20px !important;
+			background: rgba(0, 0, 0, 0.3) !important;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+			flex-shrink: 0;
+			border-radius: 17px !important;
+			margin: 0 10px !important;
+		}
+		
+		.dapp__input input {
+			width: 100% !important;
+			padding: 12px 50px 12px 15px !important;
+			background: rgba(255, 255, 255, 0.05) !important;
+			border: 1px solid rgba(255, 255, 255, 0.1) !important;
+			border-radius: 12px !important;
+			color: #fff !important;
+			font-size: 14px !important;
+			outline: none !important;
+			transition: all 0.3s ease !important;
+		}
+		
+		.dapp__input input:focus {
+			background: rgba(255, 255, 255, 0.08) !important;
+			border-color: rgba(100, 150, 255, 0.5) !important;
+		}
+		
+		.dapp__input button {
+			position: absolute !important;
+			right: 25px !important;
+			top: 50% !important;
+			transform: translateY(-50%) !important;
+			background: transparent !important;
+			border: none !important;
+			cursor: pointer !important;
+			transition: all 0.3s ease !important;
+			padding: 5px !important;
+		}
+		
+		.dapp__input button:hover {
+			transform: translateY(-50%) scale(1.1) !important;
+		}
+		
+		.dapp__input button img {
+			width: 30px !important;
+			height: 30px !important;
+		}
+		
+		/* Chat снизу */
+		.dapp__chat {
+			order: 2;
+			flex: 1 1 auto !important;
+			overflow-y: auto !important;
+			padding: 20px !important;
+			display: flex !important;
+			flex-direction: column !important;
+			gap: 12px !important;
+			margin: 0 !important;
+		}
+		
+		.dapp__chat::-webkit-scrollbar {
+			width: 6px;
+		}
+		
+		.dapp__chat::-webkit-scrollbar-track {
+			background: rgba(0, 0, 0, 0.2);
+		}
+		
+		.dapp__chat::-webkit-scrollbar-thumb {
+			background: rgba(255, 255, 255, 0.2);
+			border-radius: 3px;
+		}
+		
+		/* Сообщения с анимацией */
+		.dapp__message {
+			padding: 12px 18px !important;
+			border-radius: 16px !important;
+			max-width: 80% !important;
+			animation: slideIn 0.3s ease !important;
+			line-height: 1.5 !important;
+			word-wrap: break-word !important;
+		}
+		
+		@keyframes slideIn {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+		
+		.dapp__message._user {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+			margin-left: auto !important;
+			text-align: right !important;
+			color: #fff !important;
+			box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+			border: none !important;
+		}
+		
+		.dapp__message._ai {
+			background: rgba(89, 47, 47, 0.8) !important;
+			margin-right: auto !important;
+			color: #fff !important;
+			border: 1px solid rgba(255, 255, 255, 0.1) !important;
+		}
+		
+		.dapp__message._loading {
+			opacity: 0.6;
+			font-style: italic;
+		}
+		
+		.dapp__message._loading::after {
+			content: '...';
+			animation: dots 1.5s steps(3, end) infinite;
+		}
+		
+		@keyframes dots {
+			0%, 20% { content: '.'; }
+			40% { content: '..'; }
+			60%, 100% { content: '...'; }
+		}
+		
+		/* Правая панель - изображения */
+		.dapp__right {
+			height: 100% !important;
+			width: 100% !important;
+		}
+		
+		.dapp__website {
+			display: none !important;
+			background: #2a1634 !important;
+			border-radius: 62px !important;
+			width: 100% !important;
+			height: 100% !important;
+			padding: 30px !important;
+			overflow: auto !important;
+		}
+		
+		.dapp__website._active {
+			display: flex !important;
+			align-items: center !important;
+			justify-content: center !important;
+		}
+		
+		.dapp__website img {
+			max-width: 100% !important;
+			max-height: 100% !important;
+			object-fit: contain !important;
+			border-radius: 20px !important;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+		}
+		
+		.dapp__design {
+			display: none !important;
+			background: #2a1634 !important;
+			border-radius: 62px !important;
+			width: 100% !important;
+			height: 100% !important;
+			padding: 40px !important;
+			overflow: auto !important;
+		}
+		
+		.dapp__design._active {
+			display: block !important;
+		}
+		
+		.dapp__design::-webkit-scrollbar {
+			width: 8px;
+		}
+		
+		.dapp__design::-webkit-scrollbar-track {
+			background: rgba(0, 0, 0, 0.2);
+		}
+		
+		.dapp__design::-webkit-scrollbar-thumb {
+			background: rgba(255, 255, 255, 0.2);
+			border-radius: 4px;
+		}
+		
+		/* Лого в design */
+		.dapp__logos {
+			text-align: center !important;
+			margin-bottom: 30px !important;
+		}
+		
+		.dapp__logos img {
+			max-width: 350px !important;
+			width: 100% !important;
+			height: auto !important;
+			border-radius: 20px !important;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+		}
+		
+		/* Баннеры в design - ЦЕНТРИРОВАНИЕ */
+		.dapp__imgs {
+			display: flex !important;
+			flex-direction: column !important;
+			gap: 25px !important;
+			align-items: center !important;
+		}
+		
+		.dapp__two {
+			display: flex !important;
+			justify-content: center !important;
+			align-items: center !important;
+			gap: 20px !important;
+			width: 100% !important;
+		}
+		
+		.dapp__two img {
+			width: auto !important;
+			max-width: 45% !important;
+			height: auto !important;
+			border-radius: 20px !important;
+			box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3) !important;
+			transition: transform 0.3s ease !important;
+		}
+		
+		.dapp__two img:hover {
+			transform: scale(1.02) !important;
+		}
+		
+		/* Переключатели */
+		.dapp__switch {
+			background: #2a1634 !important;
+			display: grid !important;
+			grid-template-columns: 1fr 1fr !important;
+			text-align: center !important;
+			overflow: hidden !important;
+			border-radius: 25px !important;
+			font-size: 28px !important;
+			min-height: 110px !important;
+		}
+		
+		.dapp__switch div {
+			display: flex !important;
+			align-items: center !important;
+			justify-content: center !important;
+			cursor: pointer !important;
+			transition: all 0.3s ease !important;
+		}
+		
+		.dapp__switch div:hover {
+			background: rgba(217, 217, 217, 0.05) !important;
+		}
+		
+		.dapp__switch div._active {
+			background: rgba(217, 217, 217, 0.15) !important;
+			box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+		}
+		
+		/* Responsive */
+		@media (max-width: 998px) {
+			.dapp__switch {
+				font-size: 24px !important;
+				min-height: 90px !important;
+			}
+			
+			.dapp__design {
+				padding: 20px !important;
+				border-radius: 40px !important;
+			}
+			
+			.dapp__website {
+				border-radius: 40px !important;
+				min-height: 400px !important;
+			}
+			
+			.dapp__logos img {
+				max-width: 250px !important;
+			}
+			
+			.dapp__two {
+				gap: 15px !important;
+			}
+			
+			.dapp__two img {
+				max-width: 48% !important;
+			}
+		}
+		
+		@media (max-width: 600px) {
+			.dapp__switch {
+				font-size: 20px !important;
+				min-height: 80px !important;
+			}
+			
+			.dapp__input button img {
+				width: 25px !important;
+				height: 25px !important;
+			}
+			
+			.dapp__logos img {
+				max-width: 200px !important;
+			}
+			
+			.dapp__two {
+				flex-direction: column !important;
+				align-items: center !important;
+			}
+			
+			.dapp__two img {
+				max-width: 90% !important;
+			}
+		}
