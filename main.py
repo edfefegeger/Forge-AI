@@ -50,23 +50,18 @@ class ImageResponse(BaseModel):
 
 # Системные промпты для разных типов изображений
 DESIGN_PROMPTS = {
-    "logo": """Create a professional, modern crypto/blockchain logo for FORGE project. 
-    The logo should be: minimalist, geometric, suitable for tech/blockchain industry, 
-    clean lines, professional. Use colors: dark backgrounds with bright accents (blue, purple, orange tones).
-    User request: {user_prompt}""",
-    
-    "banner": """Create a wide banner image (16:9 aspect ratio) for a crypto accelerator website.
-    Style: modern, tech-focused, blockchain aesthetic, dark theme with vibrant accents,
-    professional and innovative look. Include abstract geometric shapes or blockchain-inspired elements.
-    User request: {user_prompt}"""
+    "logo": """Generate a high-quality logo image based on the user's description.
+User request: {user_prompt}""",
+
+    "banner": """Generate a wide banner image (16:9 aspect ratio) based on the user's description.
+User request: {user_prompt}"""
 }
 
 WEBSITE_PROMPTS = {
-    "website": """Create a full website mockup design for a crypto accelerator platform.
-    Style: modern, dark theme, blockchain-inspired, professional layout with hero section,
-    feature cards, call-to-action buttons. Clean and innovative web design.
-    User request: {user_prompt}"""
+    "website": """Generate a website mockup design based on the user's description.
+User request: {user_prompt}"""
 }
+
 
 async def generate_single_image(prompt: str, size: str, prompt_type: str, request_id: str, max_retries: int = 3):
     """Генерация одного изображения с повторными попытками"""
