@@ -6,6 +6,9 @@ let chatHistory = {
     website: []
 };
 
+// Интервал обновления статистики (каждые 10 секунд)
+const STATS_UPDATE_INTERVAL = 10000;
+let statsUpdateTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Initializing DAPP...');
@@ -14,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeSwitchers();
         initializeChat();
         initializeImageDisplay();
+        initializeStats();
         console.log('✅ DAPP initialized successfully');
     }, 100);
 });
@@ -30,17 +34,14 @@ function initializeSwitchers() {
             console.log('Switch clicked:', switchBtn.getAttribute('data-switch'));
 
             switches.forEach(s => s.classList.remove('_active'));
-
             switchBtn.classList.add('_active');
 
             currentChatType = switchBtn.getAttribute('data-switch');
             toggleDisplay(currentChatType);
-
             loadChatHistory(currentChatType);
         });
     });
 }
-
 
 function toggleDisplay(type) {
     const websiteView = document.querySelector('.dapp__website');
@@ -57,6 +58,133 @@ function toggleDisplay(type) {
     }
 }
 
+// ==================== СТАТИСТИКА ====================
+
+async function fetchStats() {
+    try {
+        console.log('📊 Fetching stats from API...');
+        
+        const response = await fetch(`${API_URL}/stats`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch stats');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Stats received:', data);
+        
+        updateStatsDisplay(data);
+        
+    } catch (error) {
+        console.error('❌ Error fetching stats:', error);
+        // В случае ошибки показываем заглушку
+        updateStatsDisplay({
+            token_created: 0,
+            trading_volume: 0,
+            active_users: 0
+        });
+    }
+}
+
+function formatNumber(num) {
+    // Форматирование чисел с пробелами (например, 100 000)
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function formatVolume(volume) {
+    // Форматирование объема торгов
+    if (volume >= 1000000) {
+        return `$${(volume / 1000000).toFixed(2)}M`;
+    } else if (volume >= 1000) {
+        return `$${(volume / 1000).toFixed(2)}K`;
+    }
+    return `$${volume.toFixed(2)}`;
+}
+
+function animateNumber(element, targetValue, duration = 1000) {
+    const startValue = parseInt(element.textContent.replace(/\s/g, '')) || 0;
+    const startTime = Date.now();
+    
+    function update() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function для плавной анимации
+        const easeOutQuad = progress * (2 - progress);
+        const currentValue = Math.floor(startValue + (targetValue - startValue) * easeOutQuad);
+        
+        element.textContent = formatNumber(currentValue);
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    
+    update();
+}
+
+function updateStatsDisplay(stats) {
+    console.log('🔄 Updating stats display:', stats);
+    
+    const counterItems = document.querySelectorAll('.counter__item');
+    
+    if (counterItems.length >= 3) {
+        // Token Created
+        const tokenSpan = counterItems[0].querySelector('span');
+        const tokenLabel = counterItems[0].querySelector('p');
+        if (tokenSpan) {
+            animateNumber(tokenSpan, stats.token_created);
+        }
+        if (tokenLabel) {
+            tokenLabel.textContent = 'Token created';
+        }
+        
+        // Trading Volume
+        const volumeSpan = counterItems[1].querySelector('span');
+        const volumeLabel = counterItems[1].querySelector('p');
+        if (volumeSpan) {
+            volumeSpan.textContent = formatVolume(stats.trading_volume);
+        }
+        if (volumeLabel) {
+            volumeLabel.textContent = 'Trading volume';
+        }
+        
+        // Active Users
+        const usersSpan = counterItems[2].querySelector('span');
+        const usersLabel = counterItems[2].querySelector('p');
+        if (usersSpan) {
+            animateNumber(usersSpan, stats.active_users);
+        }
+        if (usersLabel) {
+            usersLabel.textContent = 'Active users';
+        }
+        
+        console.log('✅ Stats display updated');
+    } else {
+        console.warn('⚠️ Counter items not found');
+    }
+}
+
+function initializeStats() {
+    console.log('📊 Initializing stats system...');
+    
+    // Первоначальная загрузка
+    fetchStats();
+    
+    // Периодическое обновление каждые 10 секунд
+    if (statsUpdateTimer) {
+        clearInterval(statsUpdateTimer);
+    }
+    
+    statsUpdateTimer = setInterval(() => {
+        console.log('⏰ Auto-updating stats...');
+        fetchStats();
+    }, STATS_UPDATE_INTERVAL);
+    
+    console.log(`✅ Stats system initialized (updates every ${STATS_UPDATE_INTERVAL/1000}s)`);
+}
+
+// ==================== ЧАТ ====================
 
 function initializeChat() {
     const input = document.querySelector('.dapp__input input');
@@ -71,7 +199,6 @@ function initializeChat() {
         return;
     }
     
-
     button.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -79,7 +206,6 @@ function initializeChat() {
         sendMessage();
     });
     
- 
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -90,7 +216,6 @@ function initializeChat() {
     
     console.log('✅ Chat initialized');
 }
-
 
 async function sendMessage() {
     const input = document.querySelector('.dapp__input input');
@@ -104,8 +229,6 @@ async function sendMessage() {
     }
 
     addMessageToChat(userMessage, 'user');
-    
-    // Очищаем input
     input.value = '';
 
     const loadingMsg = currentChatType === 'design' 
@@ -118,7 +241,6 @@ async function sendMessage() {
         console.log('Chat type:', currentChatType);
         console.log('API URL:', API_URL);
         
-
         const response = await fetch(`${API_URL}/generate-images`, {
             method: 'POST',
             headers: {
@@ -164,7 +286,6 @@ async function sendMessage() {
     }
 }
 
-
 function addMessageToChat(message, type, isLoading = false) {
     const chatContainer = document.querySelector('.dapp__chat');
     const messageDiv = document.createElement('div');
@@ -179,7 +300,6 @@ function addMessageToChat(message, type, isLoading = false) {
     
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
-
 
 function removeLoadingMessage() {
     const loadingMessage = document.querySelector('.dapp__message._loading');
@@ -197,7 +317,6 @@ function displayImages(images, type) {
         displayWebsiteImage(images);
     }
 }
-
 
 function displayDesignImages(images) {
     console.log('🎨 Displaying design images');
@@ -225,7 +344,6 @@ function displayDesignImages(images) {
             logoImg.style.transition = 'all 0.5s ease';
             logoContainer.appendChild(logoImg);
             
-
             setTimeout(() => {
                 logoImg.style.opacity = '1';
                 logoImg.style.transform = 'scale(1)';
@@ -250,7 +368,6 @@ function displayDesignImages(images) {
     console.log('✅ Design images displayed');
 }
 
-
 function displayWebsiteImage(images) {
     console.log('🌐 Displaying website image');
     const websiteView = document.querySelector('.dapp__website');
@@ -258,7 +375,6 @@ function displayWebsiteImage(images) {
     if (images.length > 0) {
         websiteView.innerHTML = '';
         
-
         const img = document.createElement('img');
         img.src = images[0].url;
         img.alt = 'Generated Website';
@@ -268,7 +384,6 @@ function displayWebsiteImage(images) {
         
         websiteView.appendChild(img);
         
-
         setTimeout(() => {
             img.style.opacity = '1';
             img.style.transform = 'scale(1)';
@@ -278,21 +393,18 @@ function displayWebsiteImage(images) {
     }
 }
 
-// Загрузка истории чата
 function loadChatHistory(type) {
     const chatContainer = document.querySelector('.dapp__chat');
     chatContainer.innerHTML = '';
     
     console.log('📜 Loading chat history for:', type);
     
-
     if (type === 'design') {
         addMessageToChat('👋 Hello! I can generate logo and banner images for your project. What would you like to create?', 'ai');
     } else {
         addMessageToChat('👋 Hello! I can generate website mockup designs. Describe your ideal website!', 'ai');
     }
     
-
     chatHistory[type].forEach(item => {
         addMessageToChat(item.userMessage, 'user');
         const successMsg = type === 'design'
@@ -300,18 +412,16 @@ function loadChatHistory(type) {
             : '✓ Website mockup generated successfully!';
         addMessageToChat(successMsg, 'ai');
         
-
         displayImages(item.images, type);
     });
 }
-
 
 function initializeImageDisplay() {
     loadChatHistory(currentChatType);
     console.log('🖼️ Image display initialized');
 }
 
-
+// Health check
 fetch(`${API_URL}/health`)
     .then(res => res.json())
     .then(data => {
@@ -320,3 +430,11 @@ fetch(`${API_URL}/health`)
     .catch(err => {
         console.error('❌ API not available:', err);
     });
+
+// Очистка при выгрузке страницы
+window.addEventListener('beforeunload', () => {
+    if (statsUpdateTimer) {
+        clearInterval(statsUpdateTimer);
+        console.log('🧹 Stats timer cleared');
+    }
+});
