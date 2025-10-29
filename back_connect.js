@@ -7,7 +7,7 @@ let chatHistory = {
 };
 
 // Интервал обновления статистики (каждые 10 секунд)
-const STATS_UPDATE_INTERVAL = 10000;
+const STATS_UPDATE_INTERVAL = 100000;
 let statsUpdateTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -2553,3 +2553,13 @@ body.ie ._ibg img {
 				max-width: 90% !important;
 			}
 		}
+
+
+.counter__title {
+    color: #add722;       /* нужный зеленый цвет */
+    text-align: center;   /* центрирование */
+    font-size: 36px;      /* размер заголовка */
+    margin-bottom: 40px;  /* отступ снизу до блоков с числами */
+    margin-top: 40px;     /* отступ сверху от предыдущих элементов */
+}
+
