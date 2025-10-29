@@ -11,6 +11,10 @@ import asyncio
 import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+import json
+from pathlib import Path
+import httpx
+import logging
 
 # Настройка логирования
 logging.basicConfig(
@@ -43,10 +47,6 @@ except Exception as e:
     logger.error(f"Failed to initialize OpenAI client: {str(e)}")
     raise
 
-# Dune API Configuration
-DUNE_API_KEY = "OgXaMFh3tApLxHXilZG0h3MLj3SusD6T"
-DUNE_QUERY_ID = "4421743"  # ID из вашей ссылки
-DUNE_API_BASE = "https://api.dune.com/api/v1"
 
 # Глобальное хранилище для статистики
 stats_cache = {
@@ -83,73 +83,106 @@ WEBSITE_PROMPTS = {
     "website": """Generate a website mockup design based on the user's description.
 User request: {user_prompt}"""
 }
-import json
-from pathlib import Path
-import httpx
-import logging
+
 
 logger = logging.getLogger(__name__)
 
 DUNE_API_KEY = os.getenv("DUNE_API_KEY")
 DUNE_API_BASE = "https://api.dune.com/api/v1"
-DUNE_QUERY_ID = "4421743"
+DUNE_API_KEY = os.getenv("DUNE_API_KEY", "OgXaMFh3tApLxHXilZG0h3MLj3SusD6T")
+
+# Три разных запроса
+DUNE_QUERIES = {
+    "trading_volume": 5095400,  # Volume today
+    "active_users": 5095346,    # Active users
+    "token_created": 4881156    # Launched today
+}
+
+from pathlib import Path
+import json
+
+async def fetch_dune_query(query_id: int) -> dict:
+    """Получение данных одного запроса Dune"""
+    url = f"{DUNE_API_BASE}/query/{query_id}/results"
+    headers = {"X-Dune-API-Key": DUNE_API_KEY}
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        return data
+
 
 async def fetch_dune_stats():
-    """Получение и агрегация статистики из Dune Analytics"""
+    """Запрашивает все три метрики с Dune и возвращает последние значения"""
+    results = {}
+    output_dir = Path("dune_results")
+    output_dir.mkdir(exist_ok=True)
+
+    logger.info("=== Fetching latest Dune analytics data ===")
+
+    for name, qid in DUNE_QUERIES.items():
+        try:
+            data = await fetch_dune_query(qid)
+            results[name] = data
+
+
+        except Exception as e:
+            logger.error(f"Error fetching {name}: {e}")
+            results[name] = None
+
+    # === Извлечение последних данных ===
+    token_created = 0
+    trading_volume = 0.0
+    active_users = 0
+
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            results_url = f"{DUNE_API_BASE}/query/{DUNE_QUERY_ID}/results"
-            headers = {"X-Dune-API-Key": DUNE_API_KEY}
-            response = await client.get(results_url, headers=headers)
-            response.raise_for_status()
+        # Tokens launched
+        if results.get("token_created"):
+            rows = results["token_created"].get("result", {}).get("rows", [])
+            if rows:
+                token_created = int(rows[0].get("token_count", 0))
 
-            data = response.json()
+        # Trading volume
+        if results.get("trading_volume"):
+            rows = results["trading_volume"].get("result", {}).get("rows", [])
+            if rows:
+                trading_volume = float(rows[0].get("Daily_Trading_Volume", 0))
 
-            # 💾 Сохраняем полный ответ Dune API
-            output_path = Path("dune_raw.json")
-            with output_path.open("w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+        # Active users
+        if results.get("active_users"):
+            rows = results["active_users"].get("result", {}).get("rows", [])
+            if rows:
+                active_users = int(rows[0].get("DAU", 0))
 
-            logger.info(f"Full Dune API response saved to {output_path.resolve()}")
-
-            # --- 🔍 Извлечение данных ---
-            rows = data.get("result", {}).get("rows", [])
-            if not rows:
-                logger.warning("No rows found in Dune response")
-                return {"token_created": 0, "trading_volume": 0, "active_users": 0}
-
-            # --- 🔢 Агрегация ---
-            total_volume = sum(float(r.get("freq", 0)) for r in rows)
-            unique_groups = set(r.get("gr") for r in rows if r.get("gr"))
-            unique_bins = set(r.get("log_bin") for r in rows if r.get("log_bin") is not None)
-
-            stats = {
-                "token_created": len(unique_bins),
-                "trading_volume": total_volume,
-                "active_users": len(unique_groups),
-            }
-
-            logger.info(f"Aggregated stats: {stats}")
-            return stats
 
     except Exception as e:
-        logger.error(f"Error fetching Dune stats: {e}", exc_info=True)
-        return {"token_created": 0, "trading_volume": 0, "active_users": 0}
+        logger.error(f"Error parsing Dune data: {e}", exc_info=True)
+
+    # Возвращаем итоговые данные
+    stats = {
+        "token_created": token_created,
+        "trading_volume": trading_volume,
+        "active_users": active_users,
+    }
+
+    logger.info(f"Latest Dune stats: {stats}")
+    return stats
 
 
 async def update_stats_cache():
-    """Обновление кэша статистики"""
-    logger.info("=== Updating stats cache ===")
-    
+    """Обновление глобального кэша статистики"""
+    logger.info("=== Updating Dune stats cache ===")
     stats = await fetch_dune_stats()
-    
+
     stats_cache["token_created"] = stats["token_created"]
     stats_cache["trading_volume"] = stats["trading_volume"]
     stats_cache["active_users"] = stats["active_users"]
     stats_cache["last_updated"] = datetime.now().isoformat()
-    
-    logger.info(f"Stats updated: {stats_cache}")
-    logger.info("=" * 30)
+
+
+
+    logger.info(f"✓ Stats cache updated: {stats_cache}")
 
 @app.get("/")
 async def root():
@@ -174,55 +207,42 @@ async def refresh_stats():
     logger.info("Manual stats refresh requested")
     await update_stats_cache()
     return {"status": "updated", "data": stats_cache}
-
 @app.get("/stats/debug")
 async def debug_dune_api():
     """Отладочный эндпоинт для проверки Dune API"""
     logger.info("Debug endpoint called")
-    
+
     debug_info = {
         "dune_api_key_set": bool(DUNE_API_KEY),
         "dune_api_key_length": len(DUNE_API_KEY) if DUNE_API_KEY else 0,
         "dune_api_key_preview": DUNE_API_KEY[:10] + "..." if DUNE_API_KEY else "None",
-        "query_id": DUNE_QUERY_ID,
         "api_base": DUNE_API_BASE,
-        "full_url": f"{DUNE_API_BASE}/query/{DUNE_QUERY_ID}/results"
+        "queries": list(DUNE_QUERIES.keys()),
+        "results": {}
     }
-    
-    # Пробуем сделать запрос
+
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            url = f"{DUNE_API_BASE}/query/{DUNE_QUERY_ID}/results"
-            headers = {
-                "X-Dune-API-Key": DUNE_API_KEY,
-                "Content-Type": "application/json"
-            }
-            
-            response = await client.get(url, headers=headers)
-            
-            debug_info["request_status"] = response.status_code
-            debug_info["request_success"] = response.status_code == 200
-            
-            if response.status_code == 200:
-                data = response.json()
-                debug_info["response_keys"] = list(data.keys())
-                
-                if "result" in data:
-                    debug_info["result_keys"] = list(data["result"].keys())
-                    if "rows" in data["result"]:
-                        rows = data["result"]["rows"]
-                        debug_info["rows_count"] = len(rows)
-                        if rows:
-                            debug_info["first_row_keys"] = list(rows[0].keys())
-                            debug_info["first_row_sample"] = rows[0]
-            else:
-                debug_info["error_response"] = response.text
-                
+        async with httpx.AsyncClient(timeout=30.0) as client_http:
+            for name, qid in DUNE_QUERIES.items():
+                url = f"{DUNE_API_BASE}/query/{qid}/results"
+                headers = {"X-Dune-API-Key": DUNE_API_KEY}
+                response = await client_http.get(url, headers=headers)
+                debug_info["results"][name] = {
+                    "status": response.status_code,
+                    "success": response.status_code == 200,
+                    "first_row": None
+                }
+                if response.status_code == 200:
+                    data = response.json()
+                    rows = data.get("result", {}).get("rows", [])
+                    if rows:
+                        debug_info["results"][name]["first_row"] = rows[0]
     except Exception as e:
         debug_info["exception"] = str(e)
         debug_info["exception_type"] = type(e).__name__
-    
+
     return debug_info
+
 
 async def generate_single_image(prompt: str, size: str, prompt_type: str, request_id: str, max_retries: int = 3):
     """Генерация одного изображения с повторными попытками"""
@@ -372,7 +392,7 @@ async def startup_event():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         update_stats_cache,
-        trigger=IntervalTrigger(hours=1),
+        trigger=IntervalTrigger(hours=20),
         id='update_stats',
         name='Update Dune Analytics stats every hour',
         replace_existing=True
