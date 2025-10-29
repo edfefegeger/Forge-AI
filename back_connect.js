@@ -58,7 +58,7 @@ function toggleDisplay(type) {
     }
 }
 
-// ==================== СТАТИСТИКА ====================
+
 
 async function fetchStats() {
     try {
@@ -77,7 +77,7 @@ async function fetchStats() {
         
     } catch (error) {
         console.error('❌ Error fetching stats:', error);
-        // В случае ошибки показываем заглушку
+
         updateStatsDisplay({
             token_created: 0,
             trading_volume: 0,
@@ -87,12 +87,12 @@ async function fetchStats() {
 }
 
 function formatNumber(num) {
-    // Форматирование чисел с пробелами (например, 100 000)
+
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
 function formatVolume(volume) {
-    // Форматирование объема торгов
+
     if (volume >= 1000000) {
         return `$${(volume / 1000000).toFixed(2)}M`;
     } else if (volume >= 1000) {
@@ -109,7 +109,6 @@ function animateNumber(element, targetValue, duration = 1000) {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         
-        // Easing function для плавной анимации
         const easeOutQuad = progress * (2 - progress);
         const currentValue = Math.floor(startValue + (targetValue - startValue) * easeOutQuad);
         
@@ -129,7 +128,7 @@ function updateStatsDisplay(stats) {
     const counterItems = document.querySelectorAll('.counter__item');
     
     if (counterItems.length >= 3) {
-        // Token Created
+
         const tokenSpan = counterItems[0].querySelector('span');
         const tokenLabel = counterItems[0].querySelector('p');
         if (tokenSpan) {
@@ -139,7 +138,6 @@ function updateStatsDisplay(stats) {
             tokenLabel.textContent = 'Token created';
         }
         
-        // Trading Volume
         const volumeSpan = counterItems[1].querySelector('span');
         const volumeLabel = counterItems[1].querySelector('p');
         if (volumeSpan) {
@@ -149,7 +147,6 @@ function updateStatsDisplay(stats) {
             volumeLabel.textContent = 'Trading volume';
         }
         
-        // Active Users
         const usersSpan = counterItems[2].querySelector('span');
         const usersLabel = counterItems[2].querySelector('p');
         if (usersSpan) {
@@ -168,10 +165,8 @@ function updateStatsDisplay(stats) {
 function initializeStats() {
     console.log('📊 Initializing stats system...');
     
-    // Первоначальная загрузка
     fetchStats();
     
-    // Периодическое обновление каждые 10 секунд
     if (statsUpdateTimer) {
         clearInterval(statsUpdateTimer);
     }
@@ -184,7 +179,6 @@ function initializeStats() {
     console.log(`✅ Stats system initialized (updates every ${STATS_UPDATE_INTERVAL/1000}s)`);
 }
 
-// ==================== ЧАТ ====================
 
 function initializeChat() {
     const input = document.querySelector('.dapp__input input');
@@ -431,7 +425,6 @@ fetch(`${API_URL}/health`)
         console.error('❌ API not available:', err);
     });
 
-// Очистка при выгрузке страницы
 window.addEventListener('beforeunload', () => {
     if (statsUpdateTimer) {
         clearInterval(statsUpdateTimer);

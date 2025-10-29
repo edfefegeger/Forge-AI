@@ -1,17 +1,14 @@
 // ==================== CONFIG ====================
 const API_URL = 'http://localhost:8000';
 
-// Интервал обновления статистики (каждые 10 секунд)
 const STATS_UPDATE_INTERVAL = 10000;
 let statsUpdateTimer = null;
 
-// ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📊 Initializing stats system...');
     initializeStats();
 });
 
-// ==================== ОСНОВНАЯ ЛОГИКА ====================
 
 async function fetchStats() {
     try {
@@ -30,7 +27,6 @@ async function fetchStats() {
     } catch (error) {
         console.error('❌ Error fetching stats:', error);
 
-        // Показываем заглушку при ошибке
         updateStatsDisplay({
             token_created: 0,
             trading_volume: 0,
@@ -69,7 +65,7 @@ function updateStatsDisplay(stats) {
     }
 }
 
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+
 
 function formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -77,12 +73,14 @@ function formatNumber(num) {
 
 function formatVolume(volume) {
     if (volume >= 1_000_000) {
-        return `$${(volume / 1_000_000).toFixed(2)}M`;
+        return `${(volume / 1_000_000).toFixed(2)}M BNB`;
     } else if (volume >= 1_000) {
-        return `$${(volume / 1_000).toFixed(2)}K`;
+        return `${(volume / 1_000).toFixed(2)}K BNB`;
     }
-    return `$${volume.toFixed(2)}`;
+    return `${volume.toFixed(2)} BNB`;
 }
+
+
 
 function animateNumber(element, targetValue, duration = 1000) {
     const startValue = parseInt(element.textContent.replace(/\s/g, '')) || 0;
@@ -105,10 +103,10 @@ function animateNumber(element, targetValue, duration = 1000) {
 }
 
 function initializeStats() {
-    // Первоначальная загрузка
+
     fetchStats();
 
-    // Периодическое обновление каждые 10 секунд
+
     if (statsUpdateTimer) {
         clearInterval(statsUpdateTimer);
     }
@@ -121,7 +119,6 @@ function initializeStats() {
     console.log(`✅ Stats system initialized (updates every ${STATS_UPDATE_INTERVAL / 1000}s)`);
 }
 
-// Очистка при выгрузке страницы
 window.addEventListener('beforeunload', () => {
     if (statsUpdateTimer) {
         clearInterval(statsUpdateTimer);
